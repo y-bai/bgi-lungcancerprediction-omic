@@ -1,5 +1,5 @@
-./genernal_utils/config.ini
 
+*.ini
 .idea
 
 # Byte-compiled / optimized / DLL files
