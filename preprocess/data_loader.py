@@ -112,9 +112,21 @@ def get_features(in_tss_conf_section, tss_sel_feature_lst=None,
     tmp_re_df = pd.merge(tss_cov_df, extra_feat_df, on=common_cols)
     tmp_re_df['label'] = 0
     pos_labels = get_config()['common_cols']['pos_labels'].split(',')
+
     tmp_re_df.loc[tmp_re_df[common_cols[1]].isin(pos_labels), 'label'] = 1
-    cols_names = [x for x in tmp_re_df.columns if x not in common_cols]
-    re = tmp_re_df[cols_names]
+
+    stage_df = pd.read_csv(get_config()['paths']['sample_stage_path'], sep="\s+", usecols=['sample', 'stage'])
+
+    stage_df['stage_val'] = 0
+    stage_df.loc[stage_df['stage'].isin(['IA', 'IB']), 'stage_val'] = 1
+    stage_df.loc[stage_df['stage'].isin(['IIA', 'IIB']), 'stage_val'] = 2
+    stage_df.loc[stage_df['stage'].isin(['IIIA', 'IIIB']), 'stage_val'] = 3
+    stage_df.loc[stage_df['stage'].isin(['IVA', 'IVB']), 'stage_val'] = 4
+
+    tmp_re_stage_df = pd.merge(tmp_re_df, stage_df, on=common_cols[0])
+
+    cols_names = [x for x in tmp_re_stage_df.columns if x not in common_cols]
+    re = tmp_re_stage_df[cols_names]
 
     if save_path is not None:
         if os.path.exists(save_path):
@@ -177,7 +189,14 @@ def load_data(data_type):
         feat_df = pd.read_csv(feat_fn, sep='\t')
 
     assert feat_df is not None
-    y = feat_df.pop('label').values
+
+    y_stage_str = feat_df.pop('stage').values
+    y_stage_val = feat_df.pop('stage_val').values
+    y_label = feat_df.pop('label').values
+
     feat_name = feat_df.columns
     x = feat_df.values
-    return x, y, np.array(feat_name)
+
+    return x, y_label, y_stage_str, y_stage_val, np.array(feat_name)
+
+

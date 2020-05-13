@@ -13,9 +13,10 @@ import argparse
 import logging
 from general_utils.helper import get_config
 from preprocess import load_data, data_split_transform, data_whole_transform, feature_sel
-from model import model_train_run, get_class_weight
+from model import model_train_run, get_class_weight, single_model_train_run
 from sklearn.feature_selection import chi2, mutual_info_classif, f_classif
 from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.preprocessing import OneHotEncoder
 import joblib
 
 logging.basicConfig(
@@ -36,9 +37,13 @@ def model_split_train():
         x_train, y_train, x_test, y_test, feat_name = \
             tt_data['x_train'], tt_data['y_train'], tt_data['x_test'], tt_data['y_test'], tt_data['feat_name']
     else:
-        x, y, feat_name = load_data('train_data')  # HARD CODE here
+        x, y_label, _, y_stage_val, feat_name = load_data('train_data')  # HARD CODE here
+
+        # end = OneHotEncoder()
+        # y_stage_val_end = end.fit_transform(y_stage_val.reshape(-1, 1))
+
         # tarining data splitting and transformation
-        x_train, y_train, x_test, y_test = data_split_transform(x, y)
+        x_train, y_train, x_test, y_test = data_split_transform(x, y_stage_val, has_stage=True)
         np.savez(model_split_train_test_data,
                  x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test, feat_name=feat_name)
 
@@ -59,7 +64,10 @@ def model_split_train():
 
     logger.info('training split_model...')
     cls_weight = get_class_weight(y_train_new)
-    clf, scores = model_train_run(x_train_new, y_train_new, cls_weight=cls_weight)
+    # clf, scores = model_train_run(x_train_new, y_train_new, cls_weight=cls_weight)
+
+    clf, scores = single_model_train_run(x_train_new, y_train_new, cv_score=True, cls_weight=cls_weight)
+
     logger.info('saving split_model...')
     model_split_model_dump_file = os.path.join(out_model_dir,
                                                conf_outmodelpath['model_split_model_dump_file'])
@@ -86,9 +94,10 @@ def model_whole_train():
         tt_data = np.load(model_whole_train_test_data)
         x_train, y_train, feat_name = tt_data['x_train'], tt_data['y_train'], tt_data['feat_name']
     else:
-        x, y, feat_name = load_data('train_data')  # HARD CODE here
+        x, y_label, _, y_stage_val, feat_name = load_data('train_data')  # HARD CODE here
+
         # tarining data splitting and transformation
-        x_train, y_train = data_whole_transform(x, y)
+        x_train, y_train = data_whole_transform(x, y_stage_val)
         np.savez(model_whole_train_test_data,
                  x_train=x_train, y_train=y_train, feat_name=feat_name)
 
@@ -109,7 +118,15 @@ def model_whole_train():
 
     logger.info('training whole model...')
     cls_weight = get_class_weight(y_train_new)
-    clf, _ = model_train_run(x_train_new, y_train_new, cls_weight=cls_weight, cv_score=False)
+    # clf, _ = model_train_run(x_train_new, y_train_new, cls_weight=cls_weight, cv_score=False)
+
+    clf, _ = single_model_train_run(x_train_new, y_train_new, cv_score=False, cls_weight=cls_weight)
+    y_pred = clf.predict_proba(x_train_new)
+
+    risk = np.dot(y_pred, np.array([[0], [1], [4], [8], [10]]))
+
+    logger.info(clf.classes_)
+    logger.info(list(zip(y_train_new, y_pred, risk.flatten())))
 
     logger.info('saving whole model...')
     model_whole_model_dump_file = os.path.join(out_model_dir,

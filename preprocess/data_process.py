@@ -15,11 +15,49 @@ from sklearn.feature_selection import chi2, mutual_info_classif, f_classif
 import joblib
 
 
-def data_split_transform(x, y, test_ratio=0.2):
-    x_train, x_test, y_train, y_test = train_test_split(x, y,
+def data_split_transform(x, y, test_ratio=0.2, has_stage=False):
+
+    if has_stage:
+        x_normal_stage = x[y == 0]
+        x_i_stage = x[y == 1]
+        x_ii_stage = x[y == 2]
+        x_iii_stage = x[y == 3]
+        x_iv_stage = x[y == 4]
+
+        y_normal_stage = y[y == 0]
+        y_i_stage = y[y == 1]
+        y_ii_stage = y[y == 2]
+        y_iii_stage = y[y == 3]
+        y_iv_stage = y[y == 4]
+
+        x_normal_train, x_normal_test, y_normal_train, y_normal_test = train_test_split(
+            x_normal_stage, y_normal_stage, test_size=test_ratio, random_state=123)
+
+        x_i_train, x_i_test, y_i_train, y_i_test = train_test_split(
+            x_i_stage, y_i_stage, test_size=test_ratio, random_state=123)
+
+        x_ii_train, x_ii_test, y_ii_train, y_ii_test = train_test_split(
+            x_ii_stage, y_ii_stage, test_size=test_ratio, random_state=123)
+
+        x_iii_train, x_iii_test, y_iii_train, y_iii_test = train_test_split(
+            x_iii_stage, y_iii_stage, test_size=test_ratio, random_state=123)
+
+        x_iv_train, x_iv_test, y_iv_train, y_iv_test = train_test_split(
+            x_iv_stage, y_iv_stage, test_size=test_ratio, random_state=123)
+
+        x_train = np.vstack((x_normal_train, x_i_train, x_ii_train, x_iii_train, x_iv_train))
+        y_train = np.hstack((y_normal_train, y_i_train, y_ii_train, y_iii_train, y_iv_train))
+        x_test = np.vstack((x_normal_test, x_i_test, x_ii_test, x_iii_test, x_iv_test))
+        y_test = np.hstack((y_normal_test, y_i_test, y_ii_test, y_iii_test, y_iv_test))
+
+    else:
+        x_train, x_test, y_train, y_test = train_test_split(x, y,
                                                         test_size=test_ratio,
                                                         random_state=123,
                                                         stratify=y)
+    assert len(x_train) == len(y_train)
+    assert len(x_test) == len(y_test)
+
     # ss = StandardScaler()
     ss = MinMaxScaler()
     x_train_sf = ss.fit_transform(x_train)

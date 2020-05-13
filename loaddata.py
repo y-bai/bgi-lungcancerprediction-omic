@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 
 def main(args):
     process_data_type = args.process_data_type
-    x, y, feat_name = load_data(process_data_type)
+    x, y_label, y_stage_str, y_stage_val, feat_name = load_data(process_data_type)
     logger.info('data generated, x.shape={0},y.shape={1}, n_pos={2}, n_neg={3}, len(features)={4}'.format(
-        x.shape, y.shape, len(y[y == 1]), len(y[y == 0]), len(feat_name)
+        x.shape, y_label.shape, len(y_label[y_label == 1]), len(y_label[y_label == 0]), len(feat_name)
     ))
     logger.info('feat_name :\n{0}'.format(feat_name))
 
