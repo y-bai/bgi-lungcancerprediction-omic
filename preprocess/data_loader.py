@@ -149,7 +149,8 @@ def load_data(data_type):
         in_tss_conf_section = 'tss_cov_2k_30_path'
         tss_sel_feature_lst = None
         sample_sel_lst = None
-        labels = [pos_labels[0], neg_labels[0]]  # NOTE: this following the previous version of the GROUPs
+        labels = [pos_labels[0], pos_labels[1], neg_labels[0]]  # NOTE: this following the previous version of the GROUPs
+
         # comment out is would have 284 samples
     else:
         out_data_conf_section = 'unseen_pred_data_fname'
